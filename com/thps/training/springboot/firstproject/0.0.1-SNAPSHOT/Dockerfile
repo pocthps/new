@@ -1,0 +1,1 @@
+FROM docker-registry.default.svc:5000/sample/java-docker:latest
