@@ -1,1 +1,3 @@
-sfdv
+#!/bin/bash
+mv /tmp/src/deployments /deployments
+ls /deployments
