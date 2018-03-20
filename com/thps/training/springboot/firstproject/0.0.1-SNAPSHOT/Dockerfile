@@ -81,6 +81,7 @@ RUN curl -o "rsync.rpm" -L "http://mirror.centos.org/centos/7/os/x86_64/Packages
 RUN rpm -Uvh "rsync.rpm"
 RUN curl -o "git.rpm" -L "http://mirror.centos.org/centos/7/updates/x86_64/Packages/git-1.8.3.1-12.el7_4.x86_64.rpm"
 RUN rpm -Uvh "git.rpm"
+RUN rm /*.rpm
 
 RUN git clone https://github.com/pocthps/new.git
 RUN find ./ -name *.jar -exec cp {} ./root.jar \;
