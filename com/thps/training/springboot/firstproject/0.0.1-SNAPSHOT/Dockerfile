@@ -6,5 +6,5 @@ RUN chmod u+x /home/java-app/root.jar
 #RUN echo "#!/bin/sh">/home/java-app/dead.sh
 
 
-CMD ["/bin/bash java -jar root.jar"]
+CMD ["java","-jar","/home/java-app/root.jar"]
 #CMD ["java -jar /home/java-app/firstproject-0.0.1-20180221.193621-1.jar"]
