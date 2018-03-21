@@ -1,4 +1,4 @@
-FROM docker-registry.default.svc:5000/sample/java-docker:latest
+FROM docker-registry.default.svc:5000/thps-dev-project/java-docker:latest
 
 RUN curl -o "fipscheck.rpm" -L "http://mirror.centos.org/centos/7/os/x86_64/Packages/fipscheck-1.4.1-6.el7.x86_64.rpm"
 RUN rpm -Uvh --nodeps "fipscheck.rpm"
