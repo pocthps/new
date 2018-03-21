@@ -1,0 +1,97 @@
+FROM registry.access.redhat.com/rhel6/rhel
+
+ARG MYSQL_RPM
+ARG GOSU_VERSION
+
+RUN curl -o "libaio.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/libaio-0.3.107-10.el6.x86_64.rpm"
+RUN rpm -Uvh "libaio.rpm"
+
+RUN curl -o "scl-utils.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/scl-utils-20120927-27.el6_6.x86_64.rpm"
+RUN rpm -Uvh "scl-utils.rpm"
+RUN curl -o "numactl.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/numactl-2.0.9-2.el6.x86_64.rpm"
+RUN rpm -Uvh "numactl.rpm"
+
+RUN curl -o "perl.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/perl-5.10.1-144.el6.x86_64.rpm"
+RUN rpm -Uvh --nodeps "perl.rpm"
+RUN curl -o "perl-Module-Pluggable.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/perl-Module-Pluggable-3.90-144.el6.x86_64.rpm"
+RUN rpm -Uvh --nodeps "perl-Module-Pluggable.rpm"
+RUN curl -o "perl-Pod-Escapes.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/perl-Pod-Escapes-1.04-144.el6.x86_64.rpm"
+RUN rpm -Uvh --nodeps "perl-Pod-Escapes.rpm"
+RUN curl -o "perl-Pod-Simple.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/perl-Pod-Simple-3.13-144.el6.x86_64.rpm"
+RUN rpm -Uvh --nodeps "perl-Pod-Simple.rpm"
+RUN curl -o "perl-libs.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/perl-libs-5.10.1-144.el6.x86_64.rpm"
+RUN rpm -Uvh --nodeps "perl-libs.rpm"
+RUN curl -o "perl-version.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/perl-version-0.77-144.el6.x86_64.rpm"
+RUN rpm -Uvh --nodeps "perl-version.rpm"
+
+RUN curl -o "fipscheck.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/fipscheck-1.2.0-7.el6.x86_64.rpm"
+RUN rpm -Uvh --nodeps "fipscheck.rpm"
+RUN curl -o "fipscheck-lib.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/fipscheck-lib-1.2.0-7.el6.x86_64.rpm"
+RUN rpm -Uvh --nodeps "fipscheck-lib.rpm"
+RUN curl -o "libedit.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/libedit-2.11-4.20080712cvs.1.el6.x86_64.rpm"
+RUN rpm -Uvh "libedit.rpm"
+RUN curl -o "openssh.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/openssh-5.3p1-122.el6.x86_64.rpm"
+RUN rpm -Uvh "openssh.rpm"
+RUN curl -o "openssh-clients.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/openssh-clients-5.3p1-122.el6.x86_64.rpm"
+RUN rpm -Uvh "openssh-clients.rpm"
+RUN curl -o "rsync.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/rsync-3.0.6-12.el6.x86_64.rpm"
+RUN rpm -Uvh "rsync.rpm"
+RUN curl -o "perl-error.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/perl-Error-0.17015-4.el6.noarch.rpm"
+RUN rpm -Uvh "perl-error.rpm"
+RUN curl -o "perl-git.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/perl-Git-1.7.1-8.el6.noarch.rpm"
+RUN rpm -Uvh --nodeps "perl-git.rpm"
+RUN curl -o "git.rpm" -L "http://mirror.centos.org/centos/6/os/x86_64/Packages/git-1.7.1-8.el6.x86_64.rpm"
+RUN rpm -Uvh "git.rpm"
+
+ENV MYSQL_RPM=${MYSQL_RPM:-'https://dev.mysql.com/get/mysql57-community-release-el6-11.noarch.rpm'} \
+    GOSU_VERSION=${GOSU_VERSION:-'1.10'}
+
+# pwgen for random root password, dpkg/gosu for running mysqld
+RUN set -x \
+    && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm \
+    && yum install -y pwgen \
+    && yum clean -y all \
+# gosu
+    && curl -L -o /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-amd64" \
+    && curl -L -o /tmp/gosu.asc "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-amd64.asc" \
+# verify gosu
+    && export GNUPGHOME="$(mktemp -d)" \
+    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+    && gpg --batch --verify /tmp/gosu.asc /usr/local/bin/gosu \
+    && rm -r "$GNUPGHOME" /tmp/gosu.asc \
+    && chmod +x /usr/local/bin/gosu \
+    && gosu nobody true
+
+# MySQL
+RUN yum localinstall -y ${MYSQL_RPM} \
+    && yum install -y mysql-community-server \
+    && yum clean -y all \
+# make sure nothing is in /var/lib/mysql before we mount
+    && mkdir -p /var/lib/mysql /var/run/mysqld \
+# ensure that /var/run/mysqld (used for socket and lock files) is writable regardless of the UID our mysqld instance ends up having at runtime
+    && chmod 777 /var/run/mysqld \
+# comment out a few problematic configuration values
+    && sed -Ei 's/^(bind-address|log)/#&/' /etc/my.cnf \
+# change socket location
+    && sed -Ei 's/^socket=.*$/socket=\/var\/run\/mysqld\/mysql.sock/m' /etc/my.cnf \
+# remove some binaries to keep image size down
+    && rm -rf /usr/lib64/mysql/plugin/debug \
+    && rm -f /usr/sbin/mysqld-debug /usr/bin/mysqld_multi /usr/bin/mysqlcheck /usr/bin/mysqlcheck /usr/bin/mysqlpump /usr/bin/mysqlshow /usr/bin/mysql_secure_installation
+
+VOLUME /var/lib/mysql
+
+RUN git clone https://github.com/docker-library/mysql.git
+RUN cp /mysql/5.7/docker-entrypoint.sh /usr/local/bin/
+RUN rm -r /mysql
+RUN rm *.rpm
+
+RUN chmod u+x /usr/local/bin/docker-entrypoint.sh
+RUN chgrp -R 0 /usr
+RUN chmod -R g=u /usr
+
+RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+EXPOSE 3306
+
+CMD ["mysqld"]
