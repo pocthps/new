@@ -21,7 +21,6 @@ RUN export JAVA_DIR=$(ls -1 -d /usr/java/*) && \
 
 WORKDIR /home/java-app
 RUN rm /server-jre-8u*-linux-x64.tar.gz
-RUN rm /*.rpm
 
 RUN chgrp -R 0 /var
 RUN chmod -R g=u /var
