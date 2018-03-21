@@ -1,4 +1,4 @@
-FROM docker-registry.default.svc:5000/sample/java-docker:latest
+FROM docker-registry.default.svc:5000/thps-dev-project/java-docker:latest
 
 ARG TOMCAT_MAJOR_VERSION
 ARG TOMCAT_MINOR_VERSION
