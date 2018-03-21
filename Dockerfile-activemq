@@ -1,0 +1,29 @@
+FROM docker-registry.default.svc:5000/sample/java-docker:latest
+
+ENV ACTIVEMQ_VERSION=5.15.1
+ENV DOWNLOAD_LINK=https://archive.apache.org/dist/activemq/5.15.1/apache-activemq-5.15.1-bin.tar.gz
+ENV ACTIVEMQ=apache-activemq
+ENV ACTIVEMQ_HOME=/var/${ACTIVEMQ}-${ACTIVEMQ_VERSION}/
+
+
+# Downloads the specified versionon Active MQ
+RUN curl -o "${ACTIVEMQ}-${ACTIVEMQ_VERSION}-bin.tar.gz" -L "${DOWNLOAD_LINK}"
+RUN ls
+
+# Extract
+RUN tar -zxvf apache-activemq-*-bin.tar.gz -C /var
+
+RUN chgrp -R 0 /var
+RUN chmod -R g=u /var
+
+# Removes the downloaded file as it is no longer needed
+RUN rm -f apache-activemq-5.15.1-bin.tar.gz
+
+WORKDIR $ACTIVEMQ_HOME
+# Exposes UI
+EXPOSE 8161
+
+# Exposes JMS
+EXPOSE 61616
+
+CMD ["/bin/bash", "-c", "bin/activemq console"]
